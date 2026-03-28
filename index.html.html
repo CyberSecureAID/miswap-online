@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miswap.online | Secure Exchange</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Navegación -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i> miswap<span>.online</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Swap</a>
+            <a href="#">Activos</a>
+            <a href="#">Historial</a>
+        </div>
+        <div class="auth-buttons">
+            <div id="guestView">
+                <button id="btnLogin" class="btn-secondary">Ingresar</button>
+                <button id="btnRegister" class="btn-primary">Empezar</button>
+            </div>
+            <div id="userView" class="hidden">
+                <div class="user-balance">
+                    <span id="displayBalance">0.00 USD</span>
+                </div>
+                <button id="btnLogout" class="btn-danger" title="Cerrar Sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal -->
+    <main class="container">
+        <!-- Panel de Intercambio -->
+        <section class="swap-card glass-panel">
+            <div class="card-header">
+                <h2>Intercambio</h2>
+                <span class="status-badge" id="connectionStatus">Desconectado</span>
+            </div>
+            
+            <div class="swap-body">
+                <div class="input-group">
+                    <label>Pagas</label>
+                    <div class="input-row">
+                        <input type="number" id="payAmount" placeholder="0.0" step="any">
+                        <select id="payToken" class="token-select">
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="swap-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+
+                <div class="input-group">
+                    <label>Recibes</label>
+                    <div class="input-row">
+                        <input type="number" id="receiveAmount" placeholder="0.0" readonly>
+                        <select id="receiveToken" class="token-select">
+                            <option value="BTC">BTC</option>
+                            <option value="ETH">ETH</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="rate-info">
+                    <span id="exchangeRate">Esperando conexión...</span>
+                </div>
+
+                <button id="btnSwap" class="btn-swap" disabled>Conectar Billetera</button>
+            </div>
+        </section>
+
+        <!-- Panel de Activos -->
+        <section class="assets-card glass-panel">
+            <h3>Tus Activos</h3>
+            <div id="assetsList" class="assets-list">
+                <div class="asset-item loading">Inicia sesión para ver activos</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Autenticación -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalTitle">Acceso Seguro</h2>
+            <form id="authForm">
+                <input type="email" id="email" placeholder="Correo electrónico" required>
+                <input type="password" id="password" placeholder="Contraseña (min 6 caracteres)" required minlength="6">
+                <button type="submit" class="btn-primary full-width" id="submitAuthBtn">Continuar</button>
+            </form>
+            <p id="authError" class="error-msg"></p>
+            <p class="switch-auth">
+                <span id="switchText">¿No tienes cuenta?</span>
+                <a href="#" id="switchAuthMode">Crear una</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

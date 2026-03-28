@@ -1,0 +1,152 @@
+import { supabase } from './supabase-config.js';
+
+// Referencias del DOM
+const btnLogin = document.getElementById('btnLogin');
+const btnRegister = document.getElementById('btnRegister');
+const btnLogout = document.getElementById('btnLogout');
+const guestView = document.getElementById('guestView');
+const userView = document.getElementById('userView');
+const authModal = document.getElementById('authModal');
+const authForm = document.getElementById('authForm');
+const modalTitle = document.getElementById('modalTitle');
+const submitAuthBtn = document.getElementById('submitAuthBtn');
+const switchAuthMode = document.getElementById('switchAuthMode');
+const switchText = document.getElementById('switchText');
+const authError = document.getElementById('authError');
+const closeModal = document.querySelector('.close-modal');
+const connectionStatus = document.getElementById('connectionStatus');
+const displayBalance = document.getElementById('displayBalance');
+const assetsList = document.getElementById('assetsList');
+const btnSwap = document.getElementById('btnSwap');
+
+let isLoginMode = true;
+let currentUser = null;
+
+// Verificar sesión al iniciar
+async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        handleAuthSuccess(session.user);
+    } else {
+        handleAuthFail();
+    }
+}
+
+// Escuchar cambios de autenticación
+supabase.auth.onAuthStateChange((event, session) => {
+    if (session) {
+        handleAuthSuccess(session.user);
+    } else {
+        handleAuthFail();
+    }
+});
+
+function handleAuthSuccess(user) {
+    currentUser = user;
+    guestView.classList.add('hidden');
+    userView.classList.remove('hidden');
+    connectionStatus.textContent = "Conectado";
+    connectionStatus.style.color = "var(--success)";
+    btnSwap.disabled = false;
+    btnSwap.textContent = "Intercambiar";
+    loadUserProfile(user.id);
+}
+
+function handleAuthFail() {
+    currentUser = null;
+    guestView.classList.remove('hidden');
+    userView.classList.add('hidden');
+    connectionStatus.textContent = "Desconectado";
+    connectionStatus.style.color = "var(--text-muted)";
+    btnSwap.disabled = true;
+    btnSwap.textContent = "Conectar Billetera";
+    assetsList.innerHTML = '<div class="asset-item">Inicia sesión para ver activos</div>';
+}
+
+// Manejo del modal
+btnLogin.addEventListener('click', () => openModal(true));
+btnRegister.addEventListener('click', () => openModal(false));
+closeModal.addEventListener('click', () => authModal.classList.add('hidden'));
+
+switchAuthMode.addEventListener('click', (e) => {
+    e.preventDefault();
+    isLoginMode = !isLoginMode;
+    openModal(isLoginMode);
+});
+
+function openModal(login) {
+    isLoginMode = login;
+    modalTitle.textContent = login ? "Iniciar Sesión" : "Crear Cuenta";
+    submitAuthBtn.textContent = login ? "Ingresar" : "Registrarse";
+    switchText.textContent = login ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
+    switchAuthMode.textContent = login ? "Crear una" : "Ingresar";
+    authError.textContent = "";
+    authModal.classList.remove('hidden');
+}
+
+// Enviar formulario de auth
+authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    submitAuthBtn.disabled = true;
+    submitAuthBtn.textContent = "Procesando...";
+
+    try {
+        if (isLoginMode) {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+        } else {
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) throw error;
+            alert("Cuenta creada. Revisa tu correo si es necesario.");
+        }
+        authModal.classList.add('hidden');
+    } catch (error) {
+        authError.textContent = error.message;
+    } finally {
+        submitAuthBtn.disabled = false;
+        submitAuthBtn.textContent = isLoginMode ? "Ingresar" : "Registrarse";
+    }
+});
+
+btnLogout.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+});
+
+// Cargar perfil del usuario
+async function loadUserProfile(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('balance_usd, balance_btc, balance_eth')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+
+        displayBalance.textContent = `$${data.balance_usd.toFixed(2)} USD`;
+        
+        assetsList.innerHTML = `
+            <div class="asset-item">
+                <span><i class="fa-solid fa-dollar-sign"></i> USD</span>
+                <span>${data.balance_usd.toFixed(2)}</span>
+            </div>
+            <div class="asset-item">
+                <span><i class="fa-brands fa-bitcoin"></i> BTC</span>
+                <span>${data.balance_btc.toFixed(6)}</span>
+            </div>
+            <div class="asset-item">
+                <span><i class="fa-brands fa-ethereum"></i> ETH</span>
+                <span>${data.balance_eth.toFixed(6)}</span>
+            </div>
+        `;
+    } catch (error) {
+        console.error("Error cargando perfil:", error);
+        assetsList.innerHTML = '<div class="asset-item" style="color:var(--danger)">Error de carga</div>';
+    }
+}
+
+// Iniciar la app
+checkSession();
